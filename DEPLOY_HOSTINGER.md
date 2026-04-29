@@ -18,7 +18,7 @@
 #    cd /home/u123456789/sierma
 #    php artisan key:generate
 #    php artisan migrate
-#    php artisan db:seed --class=AdminSeeder
+#    php artisan db:seed
 #    php artisan storage:link
 #
 #
@@ -58,7 +58,7 @@
 # [ ] APP_URL=https://yourdomain.com
 # [ ] php artisan key:generate
 # [ ] php artisan migrate
-# [ ] php artisan db:seed --class=AdminSeeder
+#    php artisan db:seed
 # [ ] php artisan storage:link
 # [ ] php artisan config:cache
 # [ ] php artisan route:cache
