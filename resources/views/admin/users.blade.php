@@ -78,7 +78,7 @@
                                     <i data-lucide="edit" class="w-4 h-4"></i>
                                 </button>
                                 @if($user->id !== Auth::id())
-                                <form method="POST" action="{{ route('admin.users.destroy', $user) }}" class="inline" onsubmit="return confirm('Hapus user ini?')">
+                                <form method="POST" action="{{ route('admin.users.destroy', $user) }}" class="inline swal-confirm-form" data-confirm-text="Hapus user {{ $user->name }}?">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">

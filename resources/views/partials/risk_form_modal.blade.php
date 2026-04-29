@@ -64,7 +64,7 @@
                                         <div class="flex gap-2">
                                             <input type="text" x-model="newSubUnitName" placeholder="Masukkan nama ruangan..." 
                                                 class="flex-1 p-2 bg-white border border-indigo-200 rounded-xl text-xs font-bold focus:ring-2 focus:ring-indigo-500 outline-none">
-                                            <button @click="if(newSubUnitName) { newRisk.sub_unit = newSubUnitName; showNewSubUnitInput = false; } else { alert('Nama ruangan tidak boleh kosong'); }" 
+                                            <button @click="if(newSubUnitName) { newRisk.sub_unit = newSubUnitName; showNewSubUnitInput = false; } else { notify('Nama ruangan tidak boleh kosong', 'warning'); }" 
                                                 type="button" class="px-3 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase">SET</button>
                                         </div>
                                     </div>

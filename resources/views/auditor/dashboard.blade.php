@@ -281,11 +281,6 @@
             </div>
         </section>
 
-        <div class="text-center pt-8 text-slate-400 text-xs font-medium">
-            <p>SI ERMa Auditor Panel &copy; {{ date('Y') }} RSUD dr. Murjani</p>
-        </div>
-    </main>
-
     <!-- AUDIT MODAL (FULL PAGE BLUR) -->
     <div x-show="showAuditModal" 
          class="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden bg-slate-900/60 backdrop-blur-xl" 
@@ -547,13 +542,29 @@
                             this.assessmentsData.unshift(data.assessment);
                         }
                         this.showAuditModal = false;
+                        this.notify('Penilaian berhasil disimpan');
                     } else {
-                        alert('Gagal menyimpan penilaian');
+                        this.notify('Gagal menyimpan penilaian', 'error');
                     }
                 } catch (e) {
                     console.error(e);
-                    alert('Terjadi kesalahan jaringan.');
+                    this.notify('Terjadi kesalahan jaringan.', 'error');
                 }
+            },
+
+            notify(title, icon = 'success') {
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true,
+                    didOpen: (toast) => {
+                        toast.addEventListener('mouseenter', Swal.stopTimer)
+                        toast.addEventListener('mouseleave', Swal.resumeTimer)
+                    }
+                });
+                Toast.fire({ icon, title });
             }
         }
     }

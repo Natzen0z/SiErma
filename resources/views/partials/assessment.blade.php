@@ -199,7 +199,7 @@
                                     <button @click="saveAssessment('self', 'Draft')" class="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-xl transition-all">
                                         Simpan Draft
                                     </button>
-                                    <button @click="confirm('Kirim assessment ke auditor? Data tidak dapat diubah setelah dikirim.') && saveAssessment('self', 'Submitted')" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-indigo-500/20">
+                                    <button @click="confirmAssessment('self', 'Submitted')" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-indigo-500/20">
                                         Simpan & Kirim ke Auditor
                                     </button>
                                 </div>
@@ -211,7 +211,7 @@
                                     <button @click="saveAssessment('auditor', 'Draft')" class="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold rounded-xl transition-all">
                                         Simpan Draft Audit
                                     </button>
-                                    <button @click="confirm('Selesaikan audit? Hasil akan dipublikasikan ke unit.') && saveAssessment('auditor', 'Final')" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-emerald-500/20">
+                                    <button @click="confirmAssessment('auditor', 'Final')" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-lg shadow-emerald-500/20">
                                         Selesaikan & Publikasi Audit
                                     </button>
                                 </div>

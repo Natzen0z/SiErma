@@ -465,13 +465,23 @@
                         this.isAnnouncementModalOpen = false;
                         setTimeout(() => { if (window.lucide) window.lucide.createIcons(); }, 100);
                     } else {
-                        alert(data.message || 'Gagal menyimpan notifikasi');
+                        this.notify(data.message || 'Gagal menyimpan notifikasi', 'error');
                     }
                 } catch (error) { console.error(error); }
             },
 
             async deleteAnnouncement(id) {
-                if (!confirm('Hapus notifikasi ini?')) return;
+                const result = await Swal.fire({
+                    title: 'Hapus notifikasi ini?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    cancelButtonColor: '#94a3b8',
+                    confirmButtonText: 'Ya, Hapus',
+                    cancelButtonText: 'Batal',
+                    reverseButtons: true
+                });
+                if (!result.isConfirmed) return;
                 try {
                     const response = await fetch(`/announcements/${id}`, {
                         method: 'DELETE',
@@ -614,6 +624,53 @@
                 sub_unit: '',
                 validator: ''
             },
+            
+            resetNewRisk() {
+                const defaultCat = this.availableCategories.length > 0 ? this.availableCategories[0].name : '';
+                const currentTriwulan = 'Triwulan ' + Math.ceil((new Date().getMonth() + 1) / 3);
+                
+                this.newRisk = { 
+                    risiko: '', 
+                    dampakDeskripsi: '', 
+                    kategori: defaultCat, 
+                    unit: this.isRestricted ? this.userUnit : '', 
+                    sub_unit: '', 
+                    validator: '', 
+                    penyebab: '', 
+                    awalD: 1, 
+                    awalP: 1, 
+                    mitigations: [{ treatment: '', status: 'Not Started', evidence_link: '' }], 
+                    evaluasi: 'Dibagi', 
+                    shared_with: [], 
+                    escalated_to: '', 
+                    residualD: 1, 
+                    residualP: 1, 
+                    pj: '', 
+                    status: 'Not Started', 
+                    is_active: true, 
+                    tanggal: new Date().toISOString().split('T')[0],
+                    triwulan: currentTriwulan
+                };
+                this.isEditMode = false;
+                this.editingRiskId = null;
+            },
+
+            // Utility for themed notifications
+            notify(title, icon = 'success', text = '') {
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true,
+                    didOpen: (toast) => {
+                        toast.addEventListener('mouseenter', Swal.stopTimer)
+                        toast.addEventListener('mouseleave', Swal.resumeTimer)
+                    }
+                });
+                Toast.fire({ icon, title, text });
+            },
+
             showNewSubUnitInput: false,
             newSubUnitName: '',
 
@@ -758,15 +815,15 @@
             },
 
             async addRisk() {
-                if (!this.newRisk.risiko) { alert("Uraian Risiko harus diisi!"); return; }
-                if (!this.newRisk.unit) { alert("Nama Unit harus diisi!"); return; }
+                if (!this.newRisk.risiko) { this.notify("Uraian Risiko harus diisi!", "warning"); return; }
+                if (!this.newRisk.unit) { this.notify("Nama Unit harus diisi!", "warning"); return; }
                 
                 // Validate mitigations
                 for (let i = 0; i < this.newRisk.mitigations.length; i++) {
                     const mit = this.newRisk.mitigations[i];
-                    if (!mit.treatment) { alert(`Uraian Tindakan pada Mitigasi #${i+1} harus diisi!`); return; }
+                    if (!mit.treatment) { this.notify(`Uraian Tindakan pada Mitigasi #${i+1} harus diisi!`, "warning"); return; }
                     if (mit.status === 'Completed' && !mit.evidence_link) { 
-                        alert(`Link G-Drive Bukti pada Mitigasi #${i+1} wajib diisi sebagai bukti penyelesaian.`); 
+                        this.notify(`Link G-Drive Bukti pada Mitigasi #${i+1} wajib diisi sebagai bukti penyelesaian.`, "warning"); 
                         return; 
                     }
                 }
@@ -805,7 +862,7 @@
                     if (!response.ok && response.status !== 422) {
                         const errorText = await response.text();
                         console.error('Server Error:', errorText);
-                        alert(`Terjadi kesalahan pada server (Status: ${response.status}). Hubungi Admin.`);
+                        this.notify(`Terjadi kesalahan pada server (Status: ${response.status}). Hubungi Admin.`, "error");
                         return;
                     }
 
@@ -825,21 +882,20 @@
                         } else {
                             this.riskData.unshift(data.risk);
                             this.isAddRiskModalOpen = false;
-                            const defaultCat = this.availableCategories.length > 0 ? this.availableCategories[0].name : '';
-                            this.newRisk = { risiko: '', dampakDeskripsi: '', kategori: defaultCat, unit: this.isRestricted ? this.userUnit : '', sub_unit: '', validator: '', penyebab: '', awalD: 1, awalP: 1, mitigations: [{ treatment: '', status: 'Not Started', evidence_link: '' }], evaluasi: 'Dibagi', shared_with: [], escalated_to: '', residualD: 1, residualP: 1, pj: '', status: 'Not Started', is_active: true, tanggal: new Date().toISOString().split('T')[0] };
+                            this.resetNewRisk();
                         }
-                        alert(data.message || 'Data berhasil disimpan!');
+                        this.notify(data.message || 'Data berhasil disimpan!');
                     } else {
                         // Handle validation errors if present
                         let errorMsg = data.message || 'Terjadi kesalahan saat menyimpan data.';
                         if (data.errors) {
                             errorMsg += '\n\nDetail:\n' + Object.values(data.errors).flat().join('\n');
                         }
-                        alert(errorMsg);
+                        this.notify(errorMsg, "error");
                     }
                 } catch (error) { 
                     console.error('Error:', error);
-                    alert("Gagal menghubungi server. Pastikan koneksi internet aktif.");
+                    this.notify("Gagal menghubungi server. Pastikan koneksi internet aktif.", "error");
                 }
             },
 
@@ -858,7 +914,7 @@
                     awalP: risk.awal_p,
                     mitigations: risk.mitigations && risk.mitigations.length > 0 ? risk.mitigations.map(m => ({ treatment: m.treatment, status: m.status, id: m.id, evidence_link: m.evidence_link || '' })) : [{ treatment: '', status: 'Not Started', evidence_link: '' }],
                     evaluasi: risk.evaluasi || 'Diturunkan',
-                    shared_with: risk.shared_with || '',
+                    shared_with: Array.isArray(risk.shared_with) ? risk.shared_with : [],
                     escalated_to: risk.escalated_to || '',
                     residualD: risk.residual_d,
                     residualP: risk.residual_p,
@@ -873,11 +929,8 @@
             },
 
             cancelEdit() {
-                this.isEditMode = false;
+                this.resetNewRisk();
                 this.isAddRiskModalOpen = false;
-                this.editingRiskId = null;
-                const defaultCat = this.availableCategories.length > 0 ? this.availableCategories[0].name : '';
-                this.newRisk = { risiko: '', dampakDeskripsi: '', kategori: defaultCat, unit: this.isUnitAdmin ? this.userUnit : '', sub_unit: '', penyebab: '', awalD: 1, awalP: 1, mitigations: [{ treatment: '', status: 'Not Started', evidence_link: '' }], evaluasi: 'Dibagi', shared_with: [], escalated_to: '', residualD: 1, residualP: 1, pj: '', status: 'Not Started', is_active: true, tanggal: new Date().toISOString().split('T')[0], triwulan: 'Triwulan ' + Math.ceil((new Date().getMonth() + 1) / 3) };
             },
 
             async saveContext() {
@@ -903,21 +956,43 @@
                             this.contexts.push(data.context);
                         }
                         this.isContextModalOpen = false;
-                        location.reload(); // Hard refresh to ensure everything updates correctly
+                        this.notify('Konteks berhasil disimpan');
+                        setTimeout(() => { if (window.lucide) window.lucide.createIcons(); }, 100);
                     }
                 } catch (error) { console.error('Error:', error); }
             },
 
             async deleteRisk(id) {
-                if (!confirm("Hapus data risiko ini?")) return;
-                try {
-                    const response = await fetch(`${this.baseRiskUrl}/${id}`, {
-                        method: 'DELETE',
-                        headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
-                    });
-                    const data = await response.json();
-                    if (data.success) this.riskData = this.riskData.filter(item => item.id !== id);
-                } catch (error) { console.error('Error:', error); }
+                const result = await Swal.fire({
+                    title: 'Hapus data risiko?',
+                    text: "Data yang dihapus tidak dapat dikembalikan!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#0d9488',
+                    cancelButtonColor: '#94a3b8',
+                    confirmButtonText: 'Ya, Hapus!',
+                    cancelButtonText: 'Batal',
+                    reverseButtons: true
+                });
+
+                if (result.isConfirmed) {
+                    try {
+                        const response = await fetch(`${this.baseRiskUrl}/${id}`, {
+                            method: 'DELETE',
+                            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            this.riskData = this.riskData.filter(item => item.id !== id);
+                            this.notify("Data berhasil dihapus");
+                        } else {
+                            this.notify(data.message || "Gagal menghapus data", "error");
+                        }
+                    } catch (error) { 
+                        console.error('Error:', error);
+                        this.notify("Terjadi kesalahan sistem", "error");
+                    }
+                }
             },
 
             async updateRisk(risk) {
@@ -937,11 +1012,11 @@
                         // Optional: Show toast or small notification instead of alert for seamless experience
                         console.log('Update success');
                     } else {
-                        alert(data.message || 'Gagal memperbarui data');
+                        this.notify(data.message || 'Gagal memperbarui data', "error");
                     }
                 } catch (error) { 
                     console.error('Error:', error);
-                    alert('Terjadi kesalahan koneksi ke server.');
+                    this.notify('Terjadi kesalahan koneksi ke server.', "error");
                 }
             },
 
@@ -956,11 +1031,11 @@
                     if (data.success) {
                         this.riskData = this.riskData.map(item => item.id === risk.id ? data.risk : item);
                     } else {
-                        alert(data.message || 'Gagal memperbarui status');
+                        this.notify(data.message || 'Gagal memperbarui status', "error");
                     }
                 } catch (error) { 
                     console.error('Error:', error);
-                    alert('Terjadi kesalahan koneksi ke server.');
+                    this.notify('Terjadi kesalahan koneksi ke server.', "error");
                 }
             },
 
@@ -995,6 +1070,28 @@
                 this.isAssessmentModalOpen = true;
             },
 
+            async confirmAssessment(target, status) {
+                const text = status === 'Submitted' 
+                    ? 'Kirim assessment ke auditor? Data tidak dapat diubah setelah dikirim.' 
+                    : 'Selesaikan audit? Hasil akan dipublikasikan ke unit.';
+                
+                const result = await Swal.fire({
+                    title: 'Konfirmasi',
+                    text: text,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: status === 'Submitted' ? '#4f46e5' : '#059669',
+                    cancelButtonColor: '#94a3b8',
+                    confirmButtonText: 'Ya, Lanjutkan',
+                    cancelButtonText: 'Batal',
+                    reverseButtons: true
+                });
+
+                if (result.isConfirmed) {
+                    this.saveAssessment(target, status);
+                }
+            },
+
             async saveAssessment(target = 'self', status = 'Draft') {
                 const isAuditor = {{ Auth::user()->isAuditor() ? 'true' : 'false' }};
                 const payload = {
@@ -1027,7 +1124,7 @@
                         else this.assessmentsData.unshift(data.assessment);
                         
                         this.isAssessmentModalOpen = false;
-                        alert(data.message);
+                        this.notify(data.message);
                     }
                 } catch (error) { console.error(error); }
             },
@@ -1106,7 +1203,7 @@
                     });
                 }
                 
-                if (dataToExport.length === 0) { alert("Belum ada data untuk rentang tanggal tersebut!"); return; }
+                if (dataToExport.length === 0) { this.notify("Belum ada data untuk rentang tanggal tersebut!", "warning"); return; }
                 
                 const workbook = new ExcelJS.Workbook();
                 workbook.creator = 'SI ERMa - RSUD dr. Murjani';

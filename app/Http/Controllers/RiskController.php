@@ -386,7 +386,7 @@ class RiskController extends Controller
         else {
             $risks = Risk::where(function($query) use ($user) {
                     $query->where('unit', $user->unit)
-                          ->orWhereJsonContains('shared_with', $user->unit);
+                          ->orWhereJsonContains('shared_with', $user->name);
                 })->get();
         }
         

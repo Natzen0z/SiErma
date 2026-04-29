@@ -65,7 +65,7 @@
                             </td>
                             <td class="px-6 py-4 text-slate-400 text-xs">{{ $category->created_at->format('d M Y, H:i') }}</td>
                             <td class="px-6 py-4 text-center">
-                                <form method="POST" action="{{ route('admin.categories.destroy', $category) }}" class="inline" onsubmit="return confirm('Hapus kategori {{ $category->name }}?')">
+                                <form method="POST" action="{{ route('admin.categories.destroy', $category) }}" class="inline swal-confirm-form" data-confirm-text="Hapus kategori {{ $category->name }}?">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">

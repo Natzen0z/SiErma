@@ -74,7 +74,7 @@
                             </td>
                             <td class="px-6 py-4 text-slate-400 text-xs">{{ $unit->created_at->format('d M Y, H:i') }}</td>
                             <td class="px-6 py-4 text-center">
-                                <form method="POST" action="{{ route('admin.units.destroy', $unit) }}" class="inline" onsubmit="return confirm('Hapus unit {{ $unit->name }}? Unit ini akan dihapus dari daftar pilihan.')">
+                                <form method="POST" action="{{ route('admin.units.destroy', $unit) }}" class="inline swal-confirm-form" data-confirm-text="Hapus unit {{ $unit->name }}? Unit ini akan dihapus dari daftar pilihan.">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">

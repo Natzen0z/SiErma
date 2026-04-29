@@ -32,7 +32,7 @@
         </div>
         
         <div class="flex items-center gap-3 animate-fade-in-up" style="animation-delay: 0.2s">
-            <button @click="isAddRiskModalOpen = true; isEditMode = false;" class="bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 text-white px-5 py-2.5 rounded-2xl flex items-center gap-2.5 font-black text-xs shadow-xl shadow-teal-600/20 transition-all hover:-translate-y-1 active:scale-95 btn-shimmer">
+            <button @click="resetNewRisk(); isAddRiskModalOpen = true;" class="bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 text-white px-5 py-2.5 rounded-2xl flex items-center gap-2.5 font-black text-xs shadow-xl shadow-teal-600/20 transition-all hover:-translate-y-1 active:scale-95 btn-shimmer">
                 <div class="w-5 h-5 bg-white/20 rounded-lg flex items-center justify-center">
                     <i data-lucide="plus" class="w-3.5 h-3.5"></i>
                 </div>

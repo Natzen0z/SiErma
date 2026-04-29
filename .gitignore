@@ -22,3 +22,11 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+/database/database.sqlite
+/scratch
+check_users.php
+fix_triwulan.php
+temp_old_dash.blade.php
+*.html
+/SiErma/
+/risk

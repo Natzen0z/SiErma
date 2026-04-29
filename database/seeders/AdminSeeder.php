@@ -138,7 +138,7 @@ class AdminSeeder extends Seeder
             ]);
 
             // Populate the units table for filtering
-            Unit::firstOrCreate(['name' => $name]);
+            Unit::firstOrCreate(['name' => $name], ['bidang' => $bidang]);
         }
 
         // 3. Seed Risk Categories

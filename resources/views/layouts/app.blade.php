@@ -39,7 +39,14 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <style>
+        .swal2-popup {
+            font-family: 'Inter', sans-serif !important;
+            border-radius: 1.5rem !important;
+        }
         /* ============================================ */
         /*  DESIGN SYSTEM — SI ERMa Premium            */
         /* ============================================ */
@@ -226,5 +233,32 @@
     @yield('content')
     
     @stack('scripts')
+
+    {{-- Global SweetAlert2 confirm interceptor for delete forms --}}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.swal-confirm-form').forEach(function(form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const confirmText = this.dataset.confirmText || 'Apakah Anda yakin?';
+                Swal.fire({
+                    title: confirmText,
+                    text: 'Data yang dihapus tidak dapat dikembalikan!',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    cancelButtonColor: '#94a3b8',
+                    confirmButtonText: 'Ya, Hapus!',
+                    cancelButtonText: 'Batal',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+            });
+        });
+    });
+    </script>
 </body>
 </html>
