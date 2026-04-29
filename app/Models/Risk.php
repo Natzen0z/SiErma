@@ -10,6 +10,7 @@ class Risk extends Model
         'user_id',
         'kode',
         'unit',
+        'sub_unit',
         'kategori',
         'risiko',
         'dampak_deskripsi',
@@ -18,6 +19,8 @@ class Risk extends Model
         'awal_p',
         'pengendalian',
         'evaluasi',
+        'shared_with',
+        'escalated_to',
         'residual_d',
         'residual_p',
         'pj',
@@ -26,7 +29,20 @@ class Risk extends Model
         'validator',
         'triwulan',
         'period_year',
+        'is_active',
+        'tanggal',
+        'bidang',
+        'created_by_name',
+        'updated_by_name',
     ];
+
+    /**
+     * Get the mitigations for the risk
+     */
+    public function mitigations()
+    {
+        return $this->hasMany(Mitigation::class);
+    }
 
     /**
      * Get the user that owns the risk
@@ -41,6 +57,16 @@ class Risk extends Model
         'awal_level',
         'residual_skor',
         'residual_level',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'shared_with' => 'array',
+        'is_active' => 'boolean',
     ];
 
     /**
@@ -91,8 +117,16 @@ class Risk extends Model
      */
     public static function generateNextKode(): string
     {
-        $lastRisk = self::orderBy('id', 'desc')->first();
-        $nextNumber = $lastRisk ? intval(substr($lastRisk->kode, 2)) + 1 : 1;
+        $lastRisk = self::where('kode', 'LIKE', 'R-%')
+            ->orderByRaw('CAST(SUBSTR(kode, 3) AS UNSIGNED) DESC')
+            ->first();
+
+        $nextNumber = 1;
+        if ($lastRisk) {
+            $numericPart = preg_replace('/[^0-9]/', '', substr($lastRisk->kode, 2));
+            $nextNumber = intval($numericPart) + 1;
+        }
+        
         return 'R-' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
     }
 }

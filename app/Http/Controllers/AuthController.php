@@ -34,6 +34,9 @@ class AuthController extends Controller
             if (Auth::user()->isAdmin()) {
                 return redirect()->intended(route('admin.dashboard'));
             }
+            if (Auth::user()->isAuditor()) {
+                return redirect()->intended(route('auditor.dashboard'));
+            }
 
             return redirect()->intended(route('risk.index'));
         }
