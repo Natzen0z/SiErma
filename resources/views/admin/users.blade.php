@@ -3,7 +3,7 @@
 @section('title', 'Kelola User - Admin Panel')
 
 @section('content')
-<div x-data="{ showModal: {{ $errors->any() ? 'true' : 'false' }}, editUser: null, roleType: '{{ old('role', 'user') }}' }" x-init="setTimeout(() => { if (window.lucide) window.lucide.createIcons(); }, 100)">
+<div x-data="{ showModal: {{ $errors->any() ? 'true' : 'false' }}, editUser: null, roleType: '{{ old('role', 'user') }}', selectedFeatures: ['dashboard', 'register', 'matrix', 'controls', 'assessment'] }" x-init="setTimeout(() => { if (window.lucide) window.lucide.createIcons(); }, 100)">
     @include('admin.partials.sidebar')
 
     <!-- MAIN CONTENT -->
@@ -13,7 +13,7 @@
                <h1 class="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight">Kelola User</h1>
                <p class="text-slate-400 mt-1 text-sm font-medium">Lihat dan kelola pengguna sistem</p>
             </div>
-            <button @click="showModal = true; editUser = null; roleType = 'user'" class="bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 text-white py-2.5 px-5 rounded-xl flex items-center font-semibold text-sm transition-all shadow-lg shadow-teal-600/20 btn-shimmer">
+            <button @click="showModal = true; editUser = null; roleType = 'user'; selectedFeatures = ['dashboard', 'register', 'matrix', 'controls', 'assessment']" class="bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 text-white py-2.5 px-5 rounded-xl flex items-center font-semibold text-sm transition-all shadow-lg shadow-teal-600/20 btn-shimmer">
                 <i data-lucide="user-plus" class="w-[18px] h-[18px] mr-2"></i>
                 Tambah User
             </button>
@@ -74,7 +74,7 @@
                             <td class="px-5 py-4 text-center text-slate-700 font-bold text-xs">{{ $user->risks_count }}</td>
                             <td class="px-5 py-4 text-slate-400 text-xs">{{ $user->created_at->format('d M Y') }}</td>
                             <td class="px-5 py-4 text-center flex items-center justify-center space-x-1">
-                                <button @click="editUser = {{ json_encode($user) }}; roleType = editUser.role; showModal = true" class="p-2 text-slate-400 hover:text-teal-500 hover:bg-teal-50 rounded-lg transition-colors">
+                                <button @click="editUser = {{ json_encode($user) }}; roleType = editUser.role; selectedFeatures = editUser.features || ['dashboard', 'register', 'matrix', 'controls', 'assessment']; showModal = true" class="p-2 text-slate-400 hover:text-teal-500 hover:bg-teal-50 rounded-lg transition-colors">
                                     <i data-lucide="edit" class="w-4 h-4"></i>
                                 </button>
                                 @if($user->id !== Auth::id())
@@ -154,6 +154,24 @@
                         <option value="SDM & Pengembangan" :selected="editUser && editUser.bidang === 'SDM & Pengembangan'">SDM & Pengembangan</option>
                         <option value="Umum, Anggaran dan Keuangan" :selected="editUser && editUser.bidang === 'Umum, Anggaran dan Keuangan'">Umum, Anggaran dan Keuangan</option>
                     </select>
+                </div>
+                
+                <div class="pt-2">
+                    <label class="block text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">Akses Fitur (Tab)</label>
+                    <div class="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-xl border-[1.5px] border-slate-200">
+                        <template x-for="feature in [
+                            {id: 'dashboard', label: 'Dashboard'},
+                            {id: 'register', label: 'Daftar Risiko'},
+                            {id: 'matrix', label: 'Matriks Risiko'},
+                            {id: 'controls', label: 'Pengendalian'},
+                            {id: 'assessment', label: 'Assessment'}
+                        ]" :key="feature.id">
+                            <label class="flex items-center gap-2 p-1.5 hover:bg-white rounded-lg transition-colors cursor-pointer border border-transparent hover:border-slate-200">
+                                <input type="checkbox" name="features[]" :value="feature.id" x-model="selectedFeatures" class="rounded text-teal-600 focus:ring-teal-500">
+                                <span class="text-xs font-bold text-slate-700" x-text="feature.label"></span>
+                            </label>
+                        </template>
+                    </div>
                 </div>
                 
                 <div class="flex gap-3 pt-4">

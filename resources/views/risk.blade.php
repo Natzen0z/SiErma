@@ -23,17 +23,20 @@
         x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0"
         x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
         class="md:hidden fixed top-[52px] left-0 w-full bg-slate-900/98 backdrop-blur-xl text-white z-40 p-3 space-y-1 shadow-2xl border-b border-white/5">
-        <button @click="setActiveTab('dashboard'); isMobileMenuOpen = false" class="block w-full text-left py-2.5 px-4 hover:bg-white/10 rounded-xl text-sm font-medium transition-colors">
+        <button x-show="userFeatures.includes('dashboard')" @click="setActiveTab('dashboard'); isMobileMenuOpen = false" class="block w-full text-left py-2.5 px-4 hover:bg-white/10 rounded-xl text-sm font-medium transition-colors">
             <i data-lucide="layout-dashboard" class="w-4 h-4 inline mr-2 opacity-60"></i>Dashboard
         </button>
-        <button @click="setActiveTab('register'); isMobileMenuOpen = false" class="block w-full text-left py-2.5 px-4 hover:bg-white/10 rounded-xl text-sm font-medium transition-colors">
+        <button x-show="userFeatures.includes('register')" @click="setActiveTab('register'); isMobileMenuOpen = false" class="block w-full text-left py-2.5 px-4 hover:bg-white/10 rounded-xl text-sm font-medium transition-colors">
             <i data-lucide="file-text" class="w-4 h-4 inline mr-2 opacity-60"></i>Daftar Risiko
         </button>
-        <button @click="setActiveTab('matrix'); isMobileMenuOpen = false" class="block w-full text-left py-2.5 px-4 hover:bg-white/10 rounded-xl text-sm font-medium transition-colors">
+        <button x-show="userFeatures.includes('matrix')" @click="setActiveTab('matrix'); isMobileMenuOpen = false" class="block w-full text-left py-2.5 px-4 hover:bg-white/10 rounded-xl text-sm font-medium transition-colors">
             <i data-lucide="target" class="w-4 h-4 inline mr-2 opacity-60"></i>Matriks Risiko
         </button>
-        <button @click="setActiveTab('controls'); isMobileMenuOpen = false" class="block w-full text-left py-2.5 px-4 hover:bg-white/10 rounded-xl text-sm font-medium transition-colors">
+        <button x-show="userFeatures.includes('controls')" @click="setActiveTab('controls'); isMobileMenuOpen = false" class="block w-full text-left py-2.5 px-4 hover:bg-white/10 rounded-xl text-sm font-medium transition-colors">
             <i data-lucide="shield-check" class="w-4 h-4 inline mr-2 opacity-60"></i>Pengendalian
+        </button>
+        <button x-show="userFeatures.includes('assessment')" @click="setActiveTab('assessment'); isMobileMenuOpen = false" class="block w-full text-left py-2.5 px-4 hover:bg-white/10 rounded-xl text-sm font-medium transition-colors">
+            <i data-lucide="clipboard-check" class="w-4 h-4 inline mr-2 opacity-60"></i>Assessment
         </button>
         <hr class="border-white/10 my-2">
         <button @click="exportToExcel(); isMobileMenuOpen = false" class="block w-full text-left py-2.5 px-4 bg-emerald-600/90 hover:bg-emerald-600 rounded-xl text-sm font-semibold transition-colors">
@@ -71,7 +74,7 @@
                 { id: 'matrix', icon: 'target', label: 'Matriks Risiko' },
                 { id: 'controls', icon: 'shield-check', label: 'Pengendalian' },
                 { id: 'assessment', icon: 'clipboard-check', label: 'Assessment' }
-            ]" :key="item.id">
+            ].filter(i => userFeatures.includes(i.id))" :key="item.id">
                 <button @click="setActiveTab(item.id)" 
                     class="w-full flex items-center rounded-xl transition-all duration-200 py-3 group/nav relative"
                     :class="[
@@ -330,6 +333,12 @@
                                         <label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wider">Tanggal Akhir</label>
                                         <input type="date" x-model="exportEndDate" class="w-full p-2.5 border-[1.5px] border-slate-200 rounded-xl bg-slate-50/80 focus:ring-2 focus:ring-emerald-500 focus:outline-none text-sm font-medium">
                                     </div>
+                                    <div x-show="!isRestricted || !isUnitAdmin" class="pt-2">
+                                        <label class="flex items-center gap-2 p-2 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-slate-200">
+                                            <input type="checkbox" x-model="exportIncludeShared" class="rounded text-emerald-600 focus:ring-emerald-500">
+                                            <span class="text-xs font-bold text-slate-700">Include Risiko Gabungan (Shared)</span>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -354,7 +363,7 @@
 <script>
     function riskApp() {
         return {
-            activeTab: 'dashboard',
+            activeTab: '{!! Auth::user()->features ? (Auth::user()->features[0] ?? 'dashboard') : 'dashboard' !!}',
             isMobileMenuOpen: false,
             riskData: @json($risks),
             availableUnits: @json($units),
@@ -393,6 +402,7 @@
             userEmail: '{{ Auth::user()->email }}',
             userName: '{{ Auth::user()->name }}',
             userBidang: '{{ Auth::user()->bidang }}',
+            userFeatures: {!! json_encode(Auth::user()->features ?? ['dashboard', 'register', 'matrix', 'controls', 'assessment']) !!},
             isRestricted: {{ Auth::user()->isRestrictedToUnit() ? 'true' : 'false' }},
             isUnitAdmin: {{ Auth::user()->isUnitAdmin() ? 'true' : 'false' }},
             isAdmin: {{ Auth::user()->isAdmin() ? 'true' : 'false' }},
@@ -405,6 +415,7 @@
             isExportModalOpen: false,
             exportStartDate: '',
             exportEndDate: '',
+            exportIncludeShared: false,
             contextForm: {
                 year: new Date().getFullYear(),
                 urusan: 'Wajib - Kesehatan',
@@ -510,16 +521,27 @@
                                         (item.kategori && item.kategori.toLowerCase().includes(this.searchTerm.toLowerCase()));
                     
                     let matchesType = true;
-                    if (this.isRestricted) {
-                        if (this.filterType === 'own') {
-                            matchesType = item.unit === this.userUnit;
-                        } else if (this.filterType === 'shared') {
-                            matchesType = item.unit !== this.userUnit;
-                        }
-                    } else {
-                        // For Admin, filterUnit still works as before or we use filterType
-                        if (this.filterUnit !== '') {
+                    if (this.filterType === 'own') {
+                        matchesType = item.unit === this.userUnit;
+                        if (!this.isRestricted && this.filterUnit !== '') {
                             matchesType = item.unit === this.filterUnit;
+                        }
+                    } else if (this.filterType === 'shared') {
+                        matchesType = Array.isArray(item.shared_with) && item.shared_with.includes(this.userUnit);
+                        if (!this.isRestricted && this.filterUnit !== '') {
+                            matchesType = Array.isArray(item.shared_with) && item.shared_with.includes(this.filterUnit);
+                        }
+                    } else { // 'all'
+                        if (this.isRestricted) {
+                            if (this.isUnitAdmin) {
+                                matchesType = item.bidang === this.userBidang || item.unit === this.userUnit;
+                            } else {
+                                matchesType = item.unit === this.userUnit || (Array.isArray(item.shared_with) && item.shared_with.includes(this.userUnit));
+                            }
+                        } else {
+                            if (this.filterUnit !== '') {
+                                matchesType = item.unit === this.filterUnit || (Array.isArray(item.shared_with) && item.shared_with.includes(this.filterUnit));
+                            }
                         }
                     }
 
@@ -1188,6 +1210,24 @@
 
             async exportToExcel() {
                 let dataToExport = this.riskData;
+                
+                if (this.isRestricted) {
+                    if (this.isUnitAdmin) {
+                        dataToExport = dataToExport.filter(item => item.bidang === this.userBidang || item.unit === this.userUnit);
+                    } else {
+                        dataToExport = dataToExport.filter(item => {
+                            let isOwn = item.unit === this.userUnit;
+                            let isShared = this.exportIncludeShared && Array.isArray(item.shared_with) && item.shared_with.includes(this.userUnit);
+                            return isOwn || isShared;
+                        });
+                    }
+                } else if (this.filterUnit) {
+                    dataToExport = dataToExport.filter(item => {
+                        let isOwn = item.unit === this.filterUnit;
+                        let isShared = this.exportIncludeShared && Array.isArray(item.shared_with) && item.shared_with.includes(this.filterUnit);
+                        return isOwn || isShared;
+                    });
+                }
                 
                 if (this.exportStartDate) {
                     dataToExport = dataToExport.filter(r => {

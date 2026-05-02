@@ -52,6 +52,7 @@ class AdminController extends Controller
             'unit' => 'nullable|string|max:255',
             'sub_unit' => 'nullable|string|max:255',
             'bidang' => 'nullable|string|max:255',
+            'features' => 'nullable|array',
         ]);
 
         User::create([
@@ -63,6 +64,7 @@ class AdminController extends Controller
             'unit' => $validated['unit'] ?? null,
             'sub_unit' => $validated['sub_unit'] ?? null,
             'bidang' => $validated['bidang'] ?? null,
+            'features' => $validated['features'] ?? ['dashboard', 'register', 'matrix', 'controls', 'assessment'],
         ]);
 
         return back()->with('success', 'User berhasil ditambahkan.');
@@ -81,6 +83,7 @@ class AdminController extends Controller
             'unit' => 'nullable|string|max:255',
             'sub_unit' => 'nullable|string|max:255',
             'bidang' => 'nullable|string|max:255',
+            'features' => 'nullable|array',
         ]);
 
         $data = [
@@ -90,6 +93,7 @@ class AdminController extends Controller
             'unit' => $validated['unit'] ?? null,
             'sub_unit' => $validated['sub_unit'] ?? null,
             'bidang' => $validated['bidang'] ?? null,
+            'features' => $validated['features'] ?? [],
         ];
 
         if (!empty($validated['password'])) {

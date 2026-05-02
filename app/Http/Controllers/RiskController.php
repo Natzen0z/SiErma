@@ -41,15 +41,17 @@ class RiskController extends Controller
                     ->get();
             }
         }
-        // Others see only risks within their "unit" OR risks shared with their "unit"
+        // Others see risks within their "bidang" so they can view the "gabungan" tab
         else {
             $risks = Risk::with('mitigations')
                 ->where(function($query) use ($user) {
-                    if ($user->unit) {
+                    if ($user->bidang) {
+                        $query->where('bidang', $user->bidang)
+                              ->orWhereJsonContains('shared_with', $user->name);
+                    } elseif ($user->unit) {
                         $query->where('unit', $user->unit)
                               ->orWhereJsonContains('shared_with', $user->name);
                     } else {
-                        // If no unit, they see nothing (or maybe only public ones if any)
                         $query->whereRaw('1 = 0');
                     }
                 })
@@ -382,11 +384,17 @@ class RiskController extends Controller
         if ($user->isAdmin() || $user->email === 'direktur@rsudmurjani.id' || $user->isAuditor()) {
             $risks = Risk::all();
         }
-        // Others see only statistics for their unit OR risks shared with their unit
         else {
             $risks = Risk::where(function($query) use ($user) {
-                    $query->where('unit', $user->unit)
-                          ->orWhereJsonContains('shared_with', $user->name);
+                    if ($user->bidang) {
+                        $query->where('bidang', $user->bidang)
+                              ->orWhereJsonContains('shared_with', $user->name);
+                    } elseif ($user->unit) {
+                        $query->where('unit', $user->unit)
+                              ->orWhereJsonContains('shared_with', $user->name);
+                    } else {
+                        $query->whereRaw('1 = 0');
+                    }
                 })->get();
         }
         

@@ -26,6 +26,7 @@ class User extends Authenticatable
         'unit',
         'sub_unit',
         'bidang',
+        'features',
     ];
 
     /**
@@ -48,6 +49,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'features' => 'array',
         ];
     }
 

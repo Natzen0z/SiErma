@@ -166,7 +166,8 @@
                             @click="showPassword = !showPassword"
                             class="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-teal-600 transition-colors"
                         >
-                            <i :data-lucide="showPassword ? 'eye-off' : 'eye'" class="w-[18px] h-[18px]"></i>
+                            <span x-show="!showPassword"><i data-lucide="eye" class="w-[18px] h-[18px]"></i></span>
+                            <span x-show="showPassword" x-cloak><i data-lucide="eye-off" class="w-[18px] h-[18px]"></i></span>
                         </button>
                     </div>
                 </div>
