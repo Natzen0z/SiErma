@@ -39,6 +39,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/units', [AdminController::class, 'units'])->name('admin.units');
         Route::post('/units', [AdminController::class, 'storeUnit'])->name('admin.units.store');
         Route::delete('/units/{unit}', [AdminController::class, 'destroyUnit'])->name('admin.units.destroy');
+        Route::post('/units/{unit}/users/sync', [AdminController::class, 'syncUnitUsers'])->name('admin.units.users.sync');
 
         // Sub-Unit management
         Route::get('/sub-units', [AdminController::class, 'subUnits'])->name('admin.sub_units');

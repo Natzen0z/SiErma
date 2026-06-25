@@ -3,7 +3,7 @@
 @section('title', 'Kelola Unit - Admin Panel')
 
 @section('content')
-<div x-data="{ showModal: false }" x-init="setTimeout(() => { if (window.lucide) window.lucide.createIcons(); }, 100)">
+<div x-data="{ showModal: false, showSyncModal: false, syncUnit: null, selectedUsers: [] }" x-init="setTimeout(() => { if (window.lucide) window.lucide.createIcons(); }, 100)">
     @include('admin.partials.sidebar')
 
     <!-- MAIN CONTENT -->
@@ -74,13 +74,18 @@
                             </td>
                             <td class="px-6 py-4 text-slate-400 text-xs">{{ $unit->created_at->format('d M Y, H:i') }}</td>
                             <td class="px-6 py-4 text-center">
-                                <form method="POST" action="{{ route('admin.units.destroy', $unit) }}" class="inline swal-confirm-form" data-confirm-text="Hapus unit {{ $unit->name }}? Unit ini akan dihapus dari daftar pilihan.">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                <div class="flex items-center justify-center gap-1">
+                                    <button type="button" @click="syncUnit = {{ json_encode($unit) }}; selectedUsers = {{ json_encode($unit->users->pluck('id')) }}; showSyncModal = true" class="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors" title="Kelola User">
+                                        <i data-lucide="users" class="w-4 h-4"></i>
                                     </button>
-                                </form>
+                                    <form method="POST" action="{{ route('admin.units.destroy', $unit) }}" class="inline" onsubmit="return confirm('Hapus unit {{ $unit->name }}? Unit ini akan dihapus dari daftar pilihan.')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Hapus Unit">
+                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                         @empty
@@ -121,6 +126,37 @@
                 <div class="flex gap-3 pt-4">
                     <button type="button" @click="showModal = false" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-3 rounded-xl font-semibold text-sm transition-all">Batal</button>
                     <button type="submit" class="flex-1 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 text-white py-3 rounded-xl font-semibold text-sm transition-all shadow-lg shadow-teal-600/20 btn-shimmer">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sync Users Modal -->
+    <div x-show="showSyncModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm" @click.self="showSyncModal = false"
+        x-transition:enter="ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+        x-transition:leave="ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-2xl mx-4 max-h-[90vh] flex flex-col" @click.stop
+            x-transition:enter="ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+            <h3 class="text-lg font-extrabold text-slate-800 mb-2">Kelola User Unit: <span x-text="syncUnit ? syncUnit.name : ''" class="text-teal-600"></span></h3>
+            <p class="text-sm text-slate-500 mb-6">Pilih user yang menjadi bagian dari unit ini.</p>
+
+            <form method="POST" :action="syncUnit ? '{{ url('/admin/units') }}/' + syncUnit.id + '/users/sync' : '#'" class="flex flex-col flex-1 overflow-hidden">
+                @csrf
+                <div class="overflow-y-auto flex-1 border border-slate-200 rounded-xl p-4 space-y-3 mb-6 bg-slate-50">
+                    @foreach($users as $user)
+                    <label class="flex items-center p-3 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-teal-400 transition-colors">
+                        <input type="checkbox" name="user_ids[]" value="{{ $user->id }}" x-model="selectedUsers" class="w-5 h-5 text-teal-600 bg-slate-100 border-slate-300 rounded focus:ring-teal-500 focus:ring-2">
+                        <div class="ml-3 flex flex-col">
+                            <span class="text-sm font-semibold text-slate-800">{{ $user->name }}</span>
+                            <span class="text-xs text-slate-500">{{ $user->email }} - {{ ucfirst($user->role) }}</span>
+                        </div>
+                    </label>
+                    @endforeach
+                </div>
+
+                <div class="flex gap-3 mt-auto">
+                    <button type="button" @click="showSyncModal = false" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-3 rounded-xl font-semibold text-sm transition-all">Batal</button>
+                    <button type="submit" class="flex-1 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 text-white py-3 rounded-xl font-semibold text-sm transition-all shadow-lg shadow-teal-600/20 btn-shimmer">Simpan Perubahan</button>
                 </div>
             </form>
         </div>

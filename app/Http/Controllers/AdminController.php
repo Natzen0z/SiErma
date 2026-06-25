@@ -8,6 +8,7 @@ use App\Models\Unit;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 
@@ -34,7 +35,7 @@ class AdminController extends Controller
      */
     public function users(): View
     {
-        $users = User::withCount('risks')->orderBy('created_at', 'desc')->get();
+        $users = User::with(['units'])->withCount('risks')->orderBy('created_at', 'desc')->get();
         $units = Unit::orderBy('name', 'asc')->get();
         return view('admin.users', compact('users', 'units'));
     }
@@ -49,23 +50,39 @@ class AdminController extends Controller
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:6',
             'role' => 'required|in:admin,user,auditor',
-            'unit' => 'nullable|string|max:255',
+            'units' => 'nullable|array',
             'sub_unit' => 'nullable|string|max:255',
             'bidang' => 'nullable|string|max:255',
             'features' => 'nullable|array',
         ]);
 
-        User::create([
+        $unitNames = $validated['units'] ?? [];
+
+        $userData = [
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'password_plain' => $validated['password'],
             'role' => $validated['role'],
-            'unit' => $validated['unit'] ?? null,
+            'unit' => $unitNames[0] ?? null,
             'sub_unit' => $validated['sub_unit'] ?? null,
             'bidang' => $validated['bidang'] ?? null,
-            'features' => $validated['features'] ?? ['dashboard', 'register', 'matrix', 'controls', 'assessment'],
-        ]);
+        ];
+
+        if (Schema::hasColumn('users', 'features')) {
+            if ($validated['role'] === 'user') {
+                $userData['features'] = $validated['features'] ?? User::defaultFeatures();
+            } else {
+                $userData['features'] = $validated['features'] ?? null;
+            }
+        }
+
+        $user = User::create($userData);
+
+        if (!empty($unitNames)) {
+            $unitIds = Unit::whereIn('name', $unitNames)->pluck('id');
+            $user->units()->sync($unitIds);
+        }
 
         return back()->with('success', 'User berhasil ditambahkan.');
     }
@@ -80,20 +97,21 @@ class AdminController extends Controller
             'email' => 'required|email|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:6',
             'role' => 'required|in:admin,user,auditor',
-            'unit' => 'nullable|string|max:255',
+            'units' => 'nullable|array',
             'sub_unit' => 'nullable|string|max:255',
             'bidang' => 'nullable|string|max:255',
             'features' => 'nullable|array',
         ]);
 
+        $unitNames = $validated['units'] ?? [];
+
         $data = [
             'name' => $validated['name'],
             'email' => $validated['email'],
             'role' => $validated['role'],
-            'unit' => $validated['unit'] ?? null,
+            'unit' => $unitNames[0] ?? null,
             'sub_unit' => $validated['sub_unit'] ?? null,
             'bidang' => $validated['bidang'] ?? null,
-            'features' => $validated['features'] ?? [],
         ];
 
         if (!empty($validated['password'])) {
@@ -101,7 +119,18 @@ class AdminController extends Controller
             $data['password_plain'] = $validated['password'];
         }
 
+        if (Schema::hasColumn('users', 'features')) {
+            if ($validated['role'] === 'user') {
+                $data['features'] = $validated['features'] ?? $user->features ?? User::defaultFeatures();
+            } else {
+                $data['features'] = $validated['features'] ?? null;
+            }
+        }
+
         $user->update($data);
+
+        $unitIds = !empty($unitNames) ? Unit::whereIn('name', $unitNames)->pluck('id') : [];
+        $user->units()->sync($unitIds);
 
         return back()->with('success', 'User berhasil diperbarui.');
     }
@@ -138,8 +167,9 @@ class AdminController extends Controller
      */
     public function units(): View
     {
-        $units = Unit::orderBy('name', 'asc')->get();
-        return view('admin.units', compact('units'));
+        $units = Unit::with('users')->orderBy('name', 'asc')->get();
+        $users = User::orderBy('name', 'asc')->get();
+        return view('admin.units', compact('units', 'users'));
     }
 
     /**
@@ -155,6 +185,21 @@ class AdminController extends Controller
         Unit::create($validated);
 
         return back()->with('success', 'Unit berhasil ditambahkan.');
+    }
+
+    /**
+     * Sync users to unit
+     */
+    public function syncUnitUsers(Request $request, Unit $unit): RedirectResponse
+    {
+        $validated = $request->validate([
+            'user_ids' => 'array',
+            'user_ids.*' => 'exists:users,id',
+        ]);
+
+        $unit->users()->sync($validated['user_ids'] ?? []);
+
+        return back()->with('success', "Users berhasil di-update untuk Unit {$unit->name}.");
     }
 
     /**
